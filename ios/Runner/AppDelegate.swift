@@ -53,6 +53,8 @@ class AppDelegate: FlutterAppDelegate {
     private var stressSink: FlutterEventSink?
     private var diagSink: FlutterEventSink?
 
+    private var qcSdk: QCSDKManager { QCSDKManager.shareInstance() }
+
     // ═════════════════════════════════════════════════════════════
     // MARK: - Application lifecycle
     // ═════════════════════════════════════════════════════════════
@@ -94,7 +96,7 @@ class AppDelegate: FlutterAppDelegate {
     // ── SDK callbacks (block-based) ───────────────────────────────
 
     private func setupSdkCallbacks() {
-        let sdk = QCSDKManager.shareInstance()!
+        let sdk = qcSdk
 
         sdk.hrMeasuring = { [weak self] hr in
             guard let self = self else { return }
@@ -253,7 +255,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func startOneKeyMeasurement() {
-        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+        qcSdk.startToMeasuringWithOperateType(
             .oneKeyMeasure,
             measuringHandle: { [weak self] result in
                 guard let self = self else { return }
@@ -279,7 +281,7 @@ class AppDelegate: FlutterAppDelegate {
     private func stopOneKeyFallback(source: String) {
         guard oneClickRunning else { return }
         oneClickContinuous = false
-        QCSDKManager.shareInstance()?.stopToMeasuringWithOperateType(
+        qcSdk.stopToMeasuringWithOperateType(
             .oneKeyMeasure,
             completedHandle: { [weak self] _, _ in
                 self?.diag("[ONEKEY] stopped from \(source)")
@@ -449,7 +451,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleScan(result: @escaping FlutterResult) {
         let bleState = QCCentralManager.shared().bleState
-        if bleState == QCBluetoothStatePoweredOff {
+        if bleState == .poweredOff {
             result(FlutterError(code: "BLE_OFF", message: "Bluetooth is turned off", details: nil))
             return
         }
@@ -479,7 +481,8 @@ class AppDelegate: FlutterAppDelegate {
     private func updateScanResults(_ peripherals: [QCBlePeripheral]) {
         var devices: [[String: Any]] = []
         for qc in peripherals {
-            guard let p = qc.peripheral, let name = p.name, !name.isEmpty else { continue }
+            let p = qc.peripheral
+            guard let name = p.name, !name.isEmpty else { continue }
             let id = p.identifier.uuidString
             peripheralMap[id] = p
             let displayName = (qc.mac as String?)?.isEmpty == false ? "\(name) (\(qc.mac!))" : name
@@ -665,7 +668,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartSpO2(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+        qcSdk.startToMeasuringWithOperateType(
             .bloodOxygen,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber else { return }
@@ -677,7 +680,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopSpO2(deviceId: String, result: @escaping FlutterResult) {
-        QCSDKManager.shareInstance()?.stopToMeasuringWithOperateType(.bloodOxygen,
+        qcSdk.stopToMeasuringWithOperateType(.bloodOxygen,
                                                                       completedHandle: { _, _ in })
         result(nil)
     }
@@ -686,7 +689,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartBP(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+        qcSdk.startToMeasuringWithOperateType(
             .bloodPressue,
             measuringHandle: { _ in },
             completedHandle: { _, _, _ in })
@@ -694,7 +697,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopBP(deviceId: String, result: @escaping FlutterResult) {
-        QCSDKManager.shareInstance()?.stopToMeasuringWithOperateType(.bloodPressue,
+        qcSdk.stopToMeasuringWithOperateType(.bloodPressue,
                                                                       completedHandle: { _, _ in })
         result(nil)
     }
@@ -703,7 +706,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartTemp(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+        qcSdk.startToMeasuringWithOperateType(
             .bodyTemperature,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber else { return }
@@ -715,7 +718,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopTemp(deviceId: String, result: @escaping FlutterResult) {
-        QCSDKManager.shareInstance()?.stopToMeasuringWithOperateType(.bodyTemperature,
+        qcSdk.stopToMeasuringWithOperateType(.bodyTemperature,
                                                                       completedHandle: { _, _ in })
         result(nil)
     }
@@ -748,7 +751,7 @@ class AppDelegate: FlutterAppDelegate {
             }
         }, failed: {})
 
-        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+        qcSdk.startToMeasuringWithOperateType(
             .heartRate, timeout: 12,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber, !collected.keys.contains("heartRate") else { return }
@@ -760,7 +763,7 @@ class AppDelegate: FlutterAppDelegate {
             },
             completedHandle: { [weak self] _, _, _ in
                 guard let self = self else { return }
-                QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
+                qcSdk.startToMeasuringWithOperateType(
                     .bloodOxygen, timeout: 12,
                     measuringHandle: { val in
                         guard let n = val as? NSNumber, !collected.keys.contains("spo2") else { return }
@@ -772,8 +775,8 @@ class AppDelegate: FlutterAppDelegate {
                     },
                     completedHandle: { [weak self] _, _, _ in
                         guard let self = self else { return }
-                        QCSDKManager.shareInstance()?.startToMeasuringWithOperateType(
-                            .HRV, timeout: 12,
+                        qcSdk.startToMeasuringWithOperateType(
+                            .hrv, timeout: 12,
                             measuringHandle: { _ in },
                             completedHandle: { [weak self] _, _, _ in
                                 guard let self = self else { return }
@@ -806,12 +809,12 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleEnterCamera(result: @escaping FlutterResult) {
         guard serviceReady else { result(false); return }
-        QCSDKCmdCreator.switchToPhotoUISuccess({ result(true) }, fail: { result(false) })
+        QCSDKCmdCreator.switch(toPhotoUISuccess: { result(true) }, fail: { result(false) })
     }
 
     private func handleExitCamera(result: @escaping FlutterResult) {
         guard serviceReady else { result(false); return }
-        QCSDKCmdCreator.stopTakingPhotoSuccess({ result(true) }, fail: { result(false) })
+        QCSDKCmdCreator.stopTakingPhoto(success: { result(true) }, fail: { result(false) })
     }
 
     // ── Call / Notification reminder (ANCS) ───────────────────────
@@ -868,7 +871,7 @@ class AppDelegate: FlutterAppDelegate {
     ) {
         guard serviceReady else { result(false); return }
         let timeStr = String(format: "%02d:%02d", hour, minute)
-        let type: ALARMTYPE = enable ? ALARMOTHER : ALARMCLOSE
+        let type: ALARMTYPE = enable ? .other : .close
         let weekArr: [NSNumber] = [
             weekMask & 0x40 != 0 ? 1 : 0,
             weekMask & 0x01 != 0 ? 1 : 0,
@@ -878,7 +881,7 @@ class AppDelegate: FlutterAppDelegate {
             weekMask & 0x10 != 0 ? 1 : 0,
             weekMask & 0x20 != 0 ? 1 : 0,
         ]
-        QCSDKCmdCreator.setDrinkWaterRemindIndex(UInt(index), type: type, time: timeStr,
+        QCSDKCmdCreator.setDrinkWaterRemind(UInt(index), type: type, time: timeStr,
             cycle: weekArr,
             success: { DispatchQueue.main.async { result(true) } },
             failed:  { DispatchQueue.main.async { result(false) } })
@@ -894,15 +897,15 @@ class AppDelegate: FlutterAppDelegate {
             replied = true
             var segments: [[String: Any]] = []
             var deep = 0, light = 0, rem = 0, awake = 0
-            sleeps?.forEach { s in
+            sleeps.forEach { s in
                 segments.append(["start": s.happenDate as Any,
                                  "end":   s.endTime    as Any,
                                  "type":  s.type.rawValue])
                 switch s.type {
-                case SLEEPTYPEDEEP:  deep  += Int(s.total)
-                case SLEEPTYPELIGHT: light += Int(s.total)
-                case SLEEPTYPEREM:   rem   += Int(s.total)
-                case SLEEPTYPESOBER: awake += Int(s.total)
+                case .deep:  deep  += Int(s.total)
+                case .light: light += Int(s.total)
+                case .rem:   rem   += Int(s.total)
+                case .sober: awake += Int(s.total)
                 default: break
                 }
             }
@@ -976,19 +979,18 @@ extension AppDelegate: QCCentralManagerDelegate {
 
     func didState(_ state: QCState) {
         switch state {
-        case QCStateConnected:
-            if let p = QCCentralManager.shared().connectedPeripheral {
-                connectedPeripheral = p
-                let id = pendingConnectDeviceId ?? p.identifier.uuidString
-                if pendingConnectResult != nil || !serviceReady {
-                    onDeviceConnected(deviceId: id)
-                }
+        case .connected:
+            let p = QCCentralManager.shared().connectedPeripheral
+            connectedPeripheral = p
+            let id = pendingConnectDeviceId ?? p.identifier.uuidString
+            if pendingConnectResult != nil || !serviceReady {
+                onDeviceConnected(deviceId: id)
             }
-        case QCStateUnbind, QCStateDisconnected:
+        case .unbind, .disconnected:
             if serviceReady || connectedDeviceId != nil {
                 onDeviceDisconnected()
             }
-        case QCStateConnecting:
+        case .connecting:
             diag("[BLE] connecting...")
         default:
             break
@@ -996,7 +998,7 @@ extension AppDelegate: QCCentralManagerDelegate {
     }
 
     func didBluetoothState(_ state: QCBluetoothState) {
-        if state == QCBluetoothStatePoweredOff {
+        if state == .poweredOff {
             onDeviceDisconnected()
         }
     }

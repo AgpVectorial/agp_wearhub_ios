@@ -20,10 +20,8 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install --repo-update
+      - name: Flutter packages
+        run: flutter pub get
 
       - name: Build iOS (no codesign — compile check)
         run: flutter build ios --release --no-codesign

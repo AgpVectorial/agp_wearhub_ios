@@ -1,0 +1,42 @@
+name: agp_wear_hub
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  url_launcher: ^6.3.0
+  cupertino_icons: ^1.0.8
+
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.1
+  permission_handler: ^11.3.1
+  device_info_plus: ^10.1.0
+  shared_preferences: ^2.2.3
+  sqflite: ^2.3.3+2
+  path_provider: ^2.1.3
+  fl_chart: ^0.68.0
+  audioplayers: ^6.1.0
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "agp_logo.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sounds/

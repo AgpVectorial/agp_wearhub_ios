@@ -1,0 +1,148 @@
+AGP Wear Hub - Lista Functionalitatilor
+========================================
+
+1. Conectivitate BLE (Bluetooth Low Energy)
+   - Scanare si descoperire automata a bratarilor Bluetooth
+   - Filtrare inteligenta (exclude telefoane, TV-uri, difuzoare)
+   - Conectare la bratara prin QC Wireless SDK
+   - Reconectare automata cu backoff exponential
+   - Verificare automata status conexiune la pornire
+   - Deconectare manuala
+   - Gasire bratara (vibrare la comanda)
+   - Monitorizare intensitate semnal (RSSI)
+
+2. Monitorizare Semne Vitale (Timp Real)
+   - Puls (HR) - frecventa cardiaca in BPM
+   - Saturatie oxigen (SpO2) - nivel oxigen din sange (%)
+   - Temperatura corporala (°C)
+   - Tensiune arteriala (BP) - sistolica/diastolica mmHg
+   - Variabilitate cardiaca (HRV) - in milisecunde
+   - Nivel stres (scor 0-100)
+   - Pasi - numarare zilnica
+   - Calorii arse (kcal)
+   - Frecventa respiratorie (rpm)
+   - Nivel baterie bratara (%)
+   - Activare/dezactivare individuala per vital
+   - Interval de masurare configurabil (5-120 secunde)
+
+3. EKG (Electrocardiograma)
+   - Vizualizare EKG live cu grila medicala
+   - Detectie automata varfuri R-peak si calcul BPM
+   - Controale viteza (mm/sec) si amplificare (mm/mV)
+   - Mod demo pentru testare fara dispozitiv
+   - Pauza / Reluare / Stop inregistrare
+
+4. Alerte Medicale
+   - Alerta puls ridicat (HR > 180 BPM)
+   - Alerta puls scazut (HR < 40 BPM)
+   - Alerta SpO2 critic (< 90%)
+   - Alerta temperatura ridicata (> 39.5°C)
+   - Alerta hipotermie (< 35.0°C)
+   - Alerta baterie critica (≤ 10%)
+   - Buton apel de urgenta rapid (default: 112)
+
+5. Functii Bratara
+   - Reminder apeluri (notificare pe bratara)
+   - Reminder sedentarism (vibrare la inactivitate)
+   - Mod Nu Deranja (DND) - programare interval liniste
+   - Alarme - setare ora, minut, zile din saptamana
+   - Mod camera remota
+
+6. Ciclul Menstrual
+   - Urmarire ciclu - data ultimei menstruatii
+   - Predictie data urmatoarei menstruatii
+   - Calculare fereastra fertila
+   - Inregistrare simptome
+   - Note personale
+
+7. Monitorizare Somn
+   - Sincronizare date somn de pe bratara
+   - Vizualizare date somn
+
+8. Istoric si Grafice
+   - Istoric complet date colectate
+   - Grafice interactive per vital (fl_chart)
+   - Filtrare pe perioade: 1h, 6h, 24h, 7 zile
+   - Filtrare pe tip vital: HR/SpO2/Temp/Pasi/Baterie/BP/HRV/Stres
+   - Date separate pe profil de utilizator
+
+9. Gestionare Utilizatori
+   - Profiluri multiple pe acelasi dispozitiv
+   - Autentificare PIN (hash SHA-256 + salt)
+   - Comutare rapida intre utilizatori
+   - Stergere profil (datele vitale sunt pastrate)
+   - Logout
+   - Profil: nume, varsta, greutate, inaltime, gen, telefon urgenta
+
+10. Stocare Date
+    - Baza de date SQLite (vitals_history.db) - toate semnalele vitale
+    - Baza de date SQLite (users.db) - profiluri utilizatori
+    - Cache ultimele valori (SharedPreferences)
+    - Migrare automata DB v1 → v2
+    - Preferinte salvate per-device
+
+11. Serviciu Background
+    - Colectare periodica metrici (app minimizata)
+    - Procesare si validare automata
+    - Persistenta continua in baza de date
+
+12. Cloud si Backend
+    - Sincronizare cloud (upload automat/manual)
+    - Backup complet zilnic (configurabil)
+    - Acces remote familie/medic
+    - Reguli notificare server la valori critice
+    - Gestionare acces partajat (adaugare/revocare)
+
+13. Securitate si GDPR
+    - Criptare date locale (AES-256)
+    - Protectie acces metrici (autentificare necesara)
+    - Audit acces date (jurnalizare automata)
+    - Consimtamant GDPR (acordare/revocare)
+    - Export date (Art. 20 - portabilitate)
+    - Stergere date (Art. 17 - dreptul de a fi uitat)
+
+14. Politici de Sampling
+    - Frecvente configurabile per metrica (1-120 secunde)
+    - 3 moduri baterie: Performanta / Echilibrat / Economisire
+    - Sampling adaptiv la baterie scazuta
+    - Resetare la valori implicite
+
+15. Setari Tehnice
+    - Selectare adapter SDK (QC Wireless)
+    - Toggle reconectare automata
+    - Toggle pornire automata HR
+    - Configurare interval polling
+
+16. Diagnostice si Depanare
+    - Informatii sistem (OS, versiune, locale, CPU)
+    - Jurnal de erori cu severitate (critical/warning/info)
+    - Stergere jurnal erori
+    - Categorii erori: BLE, SDK, date, dispozitiv, stocare
+
+17. QA si Testare
+    - Plan de testare integrat (checklist pe categorii)
+    - Rulare teste automate
+    - Panou de testare (Test Panel)
+    - Simulare alerte si notificari
+
+18. Internationalizare (i18n)
+    - 13 limbi suportate:
+      * Romana
+      * Engleza
+      * Franceza
+      * Germana
+      * Italiana
+      * Spaniola
+      * Portugheza
+      * Maghiara
+      * Poloneza
+      * Turca
+      * Rusa
+      * Ucraineana
+      * Bulgara
+    - Schimbare limba din setari (persistenta)
+
+19. Informatii si Legal
+    - Despre aplicatie (versiune, copyright)
+    - Disclaimer medical (nu e dispozitiv medical)
+    - Termeni si conditii

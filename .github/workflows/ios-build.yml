@@ -1,0 +1,35 @@
+# iOS build on GitHub Actions (requires Mac runner + Apple signing secrets)
+# Secrets needed: BUILD_CERTIFICATE_BASE64, P12_PASSWORD, BUILD_PROVISION_PROFILE_BASE64, KEYCHAIN_PASSWORD
+# See: https://docs.github.com/en/actions/deployment/deploying-xcode-applications
+
+name: iOS Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build iOS (no codesign — compile check)
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload Runner.app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-runner-app
+          path: build/ios/iphoneos/Runner.app

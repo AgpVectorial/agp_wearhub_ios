@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>$(EXECUTABLE_NAME)</string>
+  <key>CFBundleIdentifier</key>
+  <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>agp_wear_hub</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSRequiresIPhoneOS</key>
+  <true/>
+  <key>UILaunchStoryboardName</key>
+  <string>LaunchScreen</string>
+  <key>UIMainStoryboardFile</key>
+  <string></string>
+  <key>UIRequiredDeviceCapabilities</key>
+  <array>
+    <string>arm64</string>
+    <string>bluetooth-le</string>
+  </array>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+
+  <!-- Permisiuni/descrieri Bluetooth iOS -->
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Bluetooth is required to connect to your wearable.</string>
+  <key>NSBluetoothPeripheralUsageDescription</key>
+  <string>Bluetooth is required to connect to your wearable.</string>
+
+  <!-- Background Bluetooth (ANCS + persistent connection) -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>bluetooth-central</string>
+    <string>bluetooth-peripheral</string>
+  </array>
+
+  <!-- Dacă folosiți locația pentru BLE pe iOS (de regulă nu e necesar) -->
+  <!--
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Location access is used for Bluetooth scanning.</string>
+  -->
+
+</dict>
+</plist>

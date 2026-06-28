@@ -1,8 +1,6 @@
 # Push to https://github.com/AgpVectorial/agp_wearhub_ios
-# GitHub needs a Personal Access Token, not your password.
-# Create one at: https://github.com/settings/tokens/new (scope: repo)
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $FlutterRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $FlutterRoot
 
@@ -13,15 +11,8 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$loggedIn = $false
-try {
-    gh auth status 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { $loggedIn = $true }
-} catch {
-    $loggedIn = $false
-}
-
-if (-not $loggedIn) {
+gh auth status 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
     Write-Host "Paste your GitHub Personal Access Token (starts with ghp_):" -ForegroundColor Yellow
     $token = Read-Host -AsSecureString
     $plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
@@ -30,23 +21,29 @@ if (-not $loggedIn) {
     if ($LASTEXITCODE -ne 0) { exit 1 }
 }
 
-Write-Host "Creating repo AgpVectorial/agp_wearhub_ios..." -ForegroundColor Cyan
-gh repo create AgpVectorial/agp_wearhub_ios --public --source=. --remote=origin --push --description "AGP Wear Hub iOS QCBandSDK" 2>&1
+# Make git use the same account as gh (fixes 403 when wrong user is cached)
+gh auth setup-git 2>$null | Out-Null
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Repo may already exist, trying push..." -ForegroundColor Yellow
-    $hasOrigin = git remote get-url origin 2>$null
-    if (-not $hasOrigin) {
-        git remote add origin https://github.com/AgpVectorial/agp_wearhub_ios.git
-    }
-    git branch -M main
-    git push -u origin main
+$remoteUrl = "https://github.com/AgpVectorial/agp_wearhub_ios.git"
+$hasOrigin = git remote get-url origin 2>$null
+if (-not $hasOrigin) {
+    git remote add origin $remoteUrl
+} else {
+    git remote set-url origin $remoteUrl
 }
+
+# Use main branch (GitHub default)
+git branch -M main
+
+Write-Host "Pushing to $remoteUrl ..." -ForegroundColor Cyan
+git push -u origin main 2>&1
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "SUCCESS: https://github.com/AgpVectorial/agp_wearhub_ios" -ForegroundColor Green
 } else {
-    Write-Host "Push failed. Check your token has repo scope and you are logged into AgpVectorial." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Push failed. Run: gh auth setup-git" -ForegroundColor Red
+    Write-Host "Then: git push -u origin main" -ForegroundColor Red
     exit 1
 }

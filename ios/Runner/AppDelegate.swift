@@ -516,11 +516,11 @@ class AppDelegate: FlutterAppDelegate {
             guard let name = p.name, !name.isEmpty else { continue }
             let id = p.identifier.uuidString
             peripheralMap[id] = p
-            let displayName = (qc.mac as String?)?.isEmpty == false ? "\(name) (\(qc.mac!))" : name
+            let displayName = qc.mac.isEmpty ? name : "\(name) (\(qc.mac))"
             devices.append([
                 "id": id,
                 "name": displayName,
-                "rssi": qc.rssi?.intValue ?? -100
+                "rssi": qc.rssi.intValue
             ])
         }
         scannedDevices = devices
@@ -908,7 +908,7 @@ class AppDelegate: FlutterAppDelegate {
             weekMask & 0x10 != 0 ? 1 : 0,
             weekMask & 0x20 != 0 ? 1 : 0,
         ]
-        QCSDKCmdCreator.setDrinkWaterRemindIndex(UInt(index), type: type, time: timeStr,
+        QCSDKCmdCreator.setDrinkWaterRemind(UInt(index), type: type, time: timeStr,
             cycle: weekArr,
             success: { DispatchQueue.main.async { result(true) } },
             failed:  { DispatchQueue.main.async { result(false) } })
@@ -985,7 +985,7 @@ class AppDelegate: FlutterAppDelegate {
     // MARK: - Convenience
     // ═════════════════════════════════════════════════════════════
 
-    private func makeHandler(_ onListen: @escaping (FlutterEventSink?) -> Void) -> FlutterStreamHandler {
+    private func makeHandler(_ onListen: @escaping (FlutterEventSink?) -> Void) -> QcStreamHandler {
         return QcStreamHandler(onListen: onListen)
     }
 

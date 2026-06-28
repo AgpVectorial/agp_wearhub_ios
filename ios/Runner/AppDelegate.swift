@@ -55,6 +55,37 @@ class AppDelegate: FlutterAppDelegate {
 
     private var qcSdk: QCSDKManager { QCSDKManager.shareInstance() }
 
+    private func startMeasuring(
+        _ type: QCMeasuringType,
+        timeout: Int? = nil,
+        measuringHandle: @escaping (Any?) -> Void,
+        completedHandle: @escaping (Bool, Any?, Error?) -> Void
+    ) {
+        if let timeout = timeout {
+            qcSdk.startToMeasuring(
+                withOperateType: type,
+                timeout: timeout,
+                measuringHandle: measuringHandle,
+                completedHandle: completedHandle)
+        } else {
+            qcSdk.startToMeasuring(
+                withOperateType: type,
+                measuringHandle: measuringHandle,
+                completedHandle: completedHandle)
+        }
+    }
+
+    private func stopMeasuring(
+        _ type: QCMeasuringType,
+        completedHandle: @escaping (Bool, Error?) -> Void
+    ) {
+        qcSdk.stopToMeasuring(withOperateType: type, completedHandle: completedHandle)
+    }
+
+    private func optionalMetric(_ value: Int) -> Any {
+        value > 0 ? value : NSNull()
+    }
+
     // ═════════════════════════════════════════════════════════════
     // MARK: - Application lifecycle
     // ═════════════════════════════════════════════════════════════
@@ -255,7 +286,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func startOneKeyMeasurement() {
-        qcSdk.startToMeasuringWithOperateType(
+        startMeasuring(
             .oneKeyMeasure,
             measuringHandle: { [weak self] result in
                 guard let self = self else { return }
@@ -281,7 +312,7 @@ class AppDelegate: FlutterAppDelegate {
     private func stopOneKeyFallback(source: String) {
         guard oneClickRunning else { return }
         oneClickContinuous = false
-        qcSdk.stopToMeasuringWithOperateType(
+        stopMeasuring(
             .oneKeyMeasure,
             completedHandle: { [weak self] _, _ in
                 self?.diag("[ONEKEY] stopped from \(source)")
@@ -539,8 +570,8 @@ class AppDelegate: FlutterAppDelegate {
 
     private func resolvePeripheral(deviceId: String) -> CBPeripheral? {
         if let p = peripheralMap[deviceId] { return p }
-        if let p = QCCentralManager.shared().connectedPeripheral,
-           p.identifier.uuidString == deviceId { return p }
+        let connected = QCCentralManager.shared().connectedPeripheral
+        if connected.identifier.uuidString == deviceId { return connected }
         guard let uuid = UUID(uuidString: deviceId) else { return nil }
         let list = QCCentralManager.shared().centerManager.retrievePeripherals(withIdentifiers: [uuid])
         return list.first
@@ -586,15 +617,15 @@ class AppDelegate: FlutterAppDelegate {
     private func handleReadMetrics(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else {
             result(["heartRate": 0, "steps": lastSteps, "battery": 0,
-                    "spo2": NSNull(), "calories": lastCalories > 0 ? lastCalories : NSNull()])
+                    "spo2": NSNull(), "calories": optionalMetric(lastCalories)])
             return
         }
         var metrics: [String: Any] = [
             "heartRate": lastHr,
             "steps": lastSteps,
             "battery": 0,
-            "spo2": lastSpo2 > 0 ? lastSpo2 : NSNull(),
-            "calories": lastCalories > 0 ? lastCalories : NSNull()
+            "spo2": optionalMetric(lastSpo2),
+            "calories": optionalMetric(lastCalories)
         ]
         let group = DispatchGroup()
 
@@ -605,12 +636,10 @@ class AppDelegate: FlutterAppDelegate {
 
         group.enter()
         QCSDKCmdCreator.getCurrentSportSucess({ sport in
-            if let s = sport {
-                self.lastSteps = Int(s.totalStepCount)
-                self.lastCalories = Int(s.calories)
-                metrics["steps"]    = Int(s.totalStepCount)
-                metrics["calories"] = Int(s.calories)
-            }
+            self.lastSteps = Int(sport.totalStepCount)
+            self.lastCalories = Int(sport.calories)
+            metrics["steps"]    = Int(sport.totalStepCount)
+            metrics["calories"] = Int(sport.calories)
             group.leave()
         }, failed: { group.leave() })
 
@@ -668,7 +697,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartSpO2(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        qcSdk.startToMeasuringWithOperateType(
+        startMeasuring(
             .bloodOxygen,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber else { return }
@@ -680,8 +709,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopSpO2(deviceId: String, result: @escaping FlutterResult) {
-        qcSdk.stopToMeasuringWithOperateType(.bloodOxygen,
-                                                                      completedHandle: { _, _ in })
+        stopMeasuring(.bloodOxygen, completedHandle: { _, _ in })
         result(nil)
     }
 
@@ -689,7 +717,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartBP(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        qcSdk.startToMeasuringWithOperateType(
+        startMeasuring(
             .bloodPressue,
             measuringHandle: { _ in },
             completedHandle: { _, _, _ in })
@@ -697,8 +725,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopBP(deviceId: String, result: @escaping FlutterResult) {
-        qcSdk.stopToMeasuringWithOperateType(.bloodPressue,
-                                                                      completedHandle: { _, _ in })
+        stopMeasuring(.bloodPressue, completedHandle: { _, _ in })
         result(nil)
     }
 
@@ -706,7 +733,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleStartTemp(deviceId: String, result: @escaping FlutterResult) {
         guard serviceReady else { result(notConnectedError()); return }
-        qcSdk.startToMeasuringWithOperateType(
+        startMeasuring(
             .bodyTemperature,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber else { return }
@@ -718,8 +745,7 @@ class AppDelegate: FlutterAppDelegate {
     }
 
     private func handleStopTemp(deviceId: String, result: @escaping FlutterResult) {
-        qcSdk.stopToMeasuringWithOperateType(.bodyTemperature,
-                                                                      completedHandle: { _, _ in })
+        stopMeasuring(.bodyTemperature, completedHandle: { _, _ in })
         result(nil)
     }
 
@@ -745,14 +771,13 @@ class AppDelegate: FlutterAppDelegate {
 
         QCSDKCmdCreator.readBatterySuccess({ bat, _ in collected["battery"] = Int(bat) }, failed: {})
         QCSDKCmdCreator.getCurrentSportSucess({ sport in
-            if let s = sport {
-                collected["steps"]    = Int(s.totalStepCount)
-                collected["calories"] = Int(s.calories)
-            }
+            collected["steps"]    = Int(sport.totalStepCount)
+            collected["calories"] = Int(sport.calories)
         }, failed: {})
 
-        qcSdk.startToMeasuringWithOperateType(
-            .heartRate, timeout: 12,
+        startMeasuring(
+            .heartRate,
+            timeout: 12,
             measuringHandle: { [weak self] val in
                 guard let self = self, let n = val as? NSNumber, !collected.keys.contains("heartRate") else { return }
                 let hr = n.intValue
@@ -763,8 +788,9 @@ class AppDelegate: FlutterAppDelegate {
             },
             completedHandle: { [weak self] _, _, _ in
                 guard let self = self else { return }
-                qcSdk.startToMeasuringWithOperateType(
-                    .bloodOxygen, timeout: 12,
+                self.startMeasuring(
+                    .bloodOxygen,
+                    timeout: 12,
                     measuringHandle: { val in
                         guard let n = val as? NSNumber, !collected.keys.contains("spo2") else { return }
                         let v = n.intValue
@@ -775,8 +801,9 @@ class AppDelegate: FlutterAppDelegate {
                     },
                     completedHandle: { [weak self] _, _, _ in
                         guard let self = self else { return }
-                        qcSdk.startToMeasuringWithOperateType(
-                            .hrv, timeout: 12,
+                        self.startMeasuring(
+                            .HRV,
+                            timeout: 12,
                             measuringHandle: { _ in },
                             completedHandle: { [weak self] _, _, _ in
                                 guard let self = self else { return }
@@ -814,7 +841,7 @@ class AppDelegate: FlutterAppDelegate {
 
     private func handleExitCamera(result: @escaping FlutterResult) {
         guard serviceReady else { result(false); return }
-        QCSDKCmdCreator.stopTakingPhoto(success: { result(true) }, fail: { result(false) })
+        QCSDKCmdCreator.stopTakingPhotoSuccess({ result(true) }, fail: { result(false) })
     }
 
     // ── Call / Notification reminder (ANCS) ───────────────────────
@@ -871,7 +898,7 @@ class AppDelegate: FlutterAppDelegate {
     ) {
         guard serviceReady else { result(false); return }
         let timeStr = String(format: "%02d:%02d", hour, minute)
-        let type: ALARMTYPE = enable ? .other : .close
+        let type = ALARMTYPE(rawValue: enable ? 2 : 0)!
         let weekArr: [NSNumber] = [
             weekMask & 0x40 != 0 ? 1 : 0,
             weekMask & 0x01 != 0 ? 1 : 0,
@@ -881,7 +908,7 @@ class AppDelegate: FlutterAppDelegate {
             weekMask & 0x10 != 0 ? 1 : 0,
             weekMask & 0x20 != 0 ? 1 : 0,
         ]
-        QCSDKCmdCreator.setDrinkWaterRemind(UInt(index), type: type, time: timeStr,
+        QCSDKCmdCreator.setDrinkWaterRemindIndex(UInt(index), type: type, time: timeStr,
             cycle: weekArr,
             success: { DispatchQueue.main.async { result(true) } },
             failed:  { DispatchQueue.main.async { result(false) } })
@@ -901,11 +928,11 @@ class AppDelegate: FlutterAppDelegate {
                 segments.append(["start": s.happenDate as Any,
                                  "end":   s.endTime    as Any,
                                  "type":  s.type.rawValue])
-                switch s.type {
-                case .deep:  deep  += Int(s.total)
-                case .light: light += Int(s.total)
-                case .rem:   rem   += Int(s.total)
-                case .sober: awake += Int(s.total)
+                switch s.type.rawValue {
+                case 3: deep  += Int(s.total)  // SLEEPTYPEDEEP
+                case 2: light += Int(s.total)  // SLEEPTYPELIGHT
+                case 4: rem   += Int(s.total)  // SLEEPTYPEREM
+                case 1: awake += Int(s.total)  // SLEEPTYPESOBER
                 default: break
                 }
             }

@@ -7,10 +7,11 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'Commercial' }
   s.author           = { 'AGP Tech' => 'dev@agptech.com' }
   s.platform         = :ios, '13.0'
-  s.source           = { :path => '.' }
+  # Required metadata; local :path install uses files from this directory.
+  s.source           = { :git => 'https://github.com/AgpVectorial/agp_wearhub_ios.git' }
 
-  # Pre-built framework located in ios/Frameworks/
   s.vendored_frameworks = 'Frameworks/QCBandSDK.framework'
+  s.preserve_paths      = 'Frameworks/QCBandSDK.framework'
 
   # System frameworks required by QCBandSDK
   s.frameworks = 'CoreBluetooth', 'UIKit', 'Foundation'

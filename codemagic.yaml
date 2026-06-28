@@ -21,14 +21,9 @@ workflows:
       - name: Flutter packages
         script: flutter pub get
 
-      - name: CocoaPods (QCBandSDK)
-        script: |
-          cd ios
-          pod install --repo-update
-
       - name: Build iOS app
         script: |
-          # Verifică compilarea nativă (QCBandSDK + QCCentralManager)
+          flutter pub get
           flutter build ios --release --no-codesign
 
     artifacts:
@@ -52,13 +47,10 @@ workflows:
       - name: Flutter packages
         script: flutter pub get
 
-      - name: CocoaPods
-        script: |
-          cd ios
-          pod install --repo-update
-
       - name: Build IPA
-        script: flutter build ipa --release
+        script: |
+          flutter pub get
+          flutter build ipa --release
 
     artifacts:
       - build/ios/ipa/*.ipa
